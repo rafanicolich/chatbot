@@ -50,23 +50,19 @@
             chatBox.scrollTop = chatBox.scrollHeight;
 
             try {
-                // Envio para a API da Forefront
-                let response = await fetch("https://api.forefront.ai/v1/chat/completions", {
+                // Envio para a API Python (chatbot_api.py no seu servidor)
+                let response = await fetch("https://rafanicolich.pythonanywhere.com/chatbot", {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": "Bearer sk-zPoNwx9ZPRB5Qq8ZVOA9KlajmzE7rSGC" // Coloque a sua chave aqui
+                        "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        model: "alpindale/Mistral-7B-v0.2-hf", // Modelo correto da Forefront
-                        messages: [{ role: "user", content: userInput }],
-                        max_tokens: 128, // Limite de tokens conforme o exemplo
-                        temperature: 0.5 // Temperatura conforme o exemplo
+                        user_input: userInput
                     })
                 });
 
                 let data = await response.json();
-                let botReply = data.choices[0].message.content;
+                let botReply = data.reply;
 
                 let botMessage = document.createElement("div");
                 botMessage.classList.add("message", "bot-message");
@@ -77,7 +73,7 @@
             } catch (error) {
                 let errorMessage = document.createElement("div");
                 errorMessage.classList.add("message", "bot-message");
-                errorMessage.textContent = "Erro ao se comunicar com a IA.";
+                errorMessage.textContent = "Erro ao se comunicar com o servidor.";
                 chatBox.appendChild(errorMessage);
             }
         }
