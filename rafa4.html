@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Assistente Virtual Maria</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #e5e5e5; }
+        .chat-container { width: 375px; height: 90vh; background-color: #f7f7f7; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; overflow: hidden; }
+        .chat-header { background-color: #075e54; color: white; padding: 15px; text-align: center; font-weight: bold; }
+        .chat-box { flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; }
+        .message { max-width: 80%; padding: 10px; margin: 5px; border-radius: 10px; word-wrap: break-word; }
+        .user-message { background-color: #dcf8c6; align-self: flex-end; }
+        .bot-message { background-color: #fff; align-self: flex-start; border: 1px solid #ddd; }
+        .input-area { display: flex; padding: 10px; background-color: white; border-top: 1px solid #ccc; }
+        .input-area input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; outline: none; }
+        .input-area button { margin-left: 10px; padding: 10px; border: none; background-color: #25d366; color: white; border-radius: 50%; cursor: pointer; width: 50px; height: 50px; }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">Assistente Virtual do Rafael</div>
+        <div class="chat-box" id="chatBox"></div>
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Digite sua mensagem">
+            <button onclick="sendMessage()">➤</button>
+        </div>
+    </div>
+
+    <script>
+        let conversationHistory = [];
+
+        async function sendMessage() {
+            let userInput = document.getElementById("userInput").value;
+            let chatBox = document.getElementById("chatBox");
+
+            if (!userInput.trim()) return;
+
+            let userMessage = document.createElement("div");
+            userMessage.classList.add("message", "user-message");
+            userMessage.textContent = userInput;
+            chatBox.appendChild(userMessage);
+
+            document.getElementById("userInput").value = "";
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            conversationHistory.push({ role: "user", content: userInput });
+
+            try {
+                let response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer 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",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        "model": "google/gemma-3-27b-it:free",
+                        "messages": conversationHistory,
+                        "instructions": "Você é Maria, uma assistente virtual responsável por explicar o processo de atendimento com o Rafael e conduzir a conversa para marcar uma reunião. Sempre responda de forma educada e objetiva. Se o usuário desviar do assunto, redirecione para o objetivo de marcar a reunião. O atendimento segue os passos: 1) Tirar dúvidas do cliente. 2) Coletar dados (nome, telefone e e-mail). 3) Marcar uma reunião de apresentação (segunda a sexta, das 8h às 12h e das 13h às 18h, duração de aproximadamente uma hora)."
+                    })
+                });
+
+                let data = await response.json();
+                let botReply = data.choices[0].message.content;
+
+                let botMessage = document.createElement("div");
+                botMessage.classList.add("message", "bot-message");
+                botMessage.textContent = botReply;
+                chatBox.appendChild(botMessage);
+
+                conversationHistory.push({ role: "assistant", content: botReply });
+
+                chatBox.scrollTop = chatBox.scrollHeight;
+            } catch (error) {
+                let errorMessage = document.createElement("div");
+                errorMessage.classList.add("message", "bot-message");
+                errorMessage.textContent = "Erro ao se comunicar com o servidor.";
+                chatBox.appendChild(errorMessage);
+            }
+        }
+
+        document.getElementById("userInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
